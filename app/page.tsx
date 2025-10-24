@@ -71,10 +71,8 @@ export default function Page() {
       const data = await res.json();
       if (!res.ok) {
         setError(data?.error || 'Could not submit. Please try again.');
-      } else {
-        // Prepend the new entry
-        if (data?.entry) setEntries((prev) => [data.entry, ...prev].slice(0, 500));
-        // Reset inputs
+      } else if (data?.entry) {
+        setEntries(prev => [data.entry, ...prev].slice(0, 500));
         setWord('');
         setMeaning('');
         setImg(null);
@@ -105,7 +103,7 @@ export default function Page() {
         </div>
       </div>
 
-      {/* Intro (first line replaced; rest kept; removed “Aiyo! Arrey! Oye!”) */}
+      {/* Intro */}
       <div className="intro">
         <p>✏️ Add a word you’ve learnt or love from your mother tongue — sweet, silly or desi!</p>
         <p>💬 Every word teaches someone something new.</p>
