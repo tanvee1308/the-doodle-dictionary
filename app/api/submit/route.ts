@@ -1,11 +1,19 @@
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
 
 import { NextRequest, NextResponse } from 'next/server';
 import { put } from '@vercel/blob';
+import { kv } from '@vercel/kv';
 
-const BAD = ['bhenchod','madarchod','choot','lund','bc','mc','randi','harami','gandu','kutte','kutti'];
+
+// --- BEGIN family-friendly profanity filter (supports variants with *, spaces, punctuation) ---
+const profanityPattern = new RegExp(
+  String.raw`(?:fuck|f[\W_]*u[\W_]*c[\W_]*k|f\*+ck|f\W*ck|fck|f\W*u\W*c\W*k|shit|s[\W_]*h[\W_]*i[\W_]*t|s\*+it|bitch|b[\W_]*i[\W_]*t[\W_]*c[\W_]*h|b\*+tch|bastard|asshole|a[\W_]*s[\W_]*s[\W_]*h[\W_]*o[\W_]*l[\W_]*e|dick|cock|pussy|slut|whore|cunt|bollocks|wanker|bugger|crap|bloody|arse|fag|twat|retard|retarded|nigger|nigga|bhench?o+d|bhe?nc[h\W_]*o[\W_]*d|bh[e3]n\W*c\W*h\W*o\W*d|b\*+nch\*+d|madarcho+d|mada+r\W*c[h\W_]*o[\W_]*d|m\*+d\*+ch\*+d|cho+ti?ya|chut[iy]a|ch?o+ti?ya|chu+ti+ya|ch\*+tiya|cho+ot|chut|ch\*+t|lund|la?vd[aao]|lavda|l\*+nda?|randi|rand[iy]|r\*+ndi|harami|haraam[iy]|h\*+rami|gandu|ga+ndu|g\*+ndu|kutti|kutte|kuttey|k\*+ttey|bhosdi?ke?|bhosri?ke|bh[o0]sd[iy]ke|bh\*+sd\*+ke|gaand|g[a\*]+nd|saale|s[a\*]+le|s[a\*]+la|bakchod|bakch[o0]d|bakch\*+d|kamina|kamine|kamin[eai]|ullu|ullu[ ]?ka|ullu\W*ka|lavde|lawde)`,
+  'i'
+);
+function isProfane(input: string): boolean {
+  const text = (input || '').toLowerCase();
+  return profanityPattern.test(text);
+}
+// --- END profanity filter ---
 
 export async function POST(req: NextRequest) {
   try {
@@ -19,30 +27,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Family-friendly only (no galis)' }, { status: 400 });
     }
 
-    // Save PNG to Blob
     const base64 = dataUrl.split(',')[1];
     const bytes = Buffer.from(base64, 'base64');
-    const id = `doodle_${Date.now()}`;
 
-    const img = await put(`doodles/${id}.png`, bytes, {
-      access: 'public',
-      contentType: 'image/png',
-    });
+    const id = `doodle_${Date.now()}`;
+    const blob = await put(`doodles/${id}.png`, bytes, { access: 'public', contentType: 'image/png' });
 
     const entry = {
       id,
-      imgUrl: img.url,
+      imgUrl: blob.url,
       word: String(word||'').slice(0, 50),
       meaning: String(meaning).slice(0, 180),
       language: String(language).slice(0, 40),
       createdAt: Date.now(),
     };
 
-    // Save entry JSON to Blob
-    await put(`entries/${id}.json`, Buffer.from(JSON.stringify(entry)), {
-      access: 'public',
-      contentType: 'application/json',
-    });
+    await kv.lpush('doodles:entries', JSON.stringify(entry));
+    await kv.ltrim('doodles:entries', 0, 499);
 
     return NextResponse.json({ ok: true, entry });
   } catch (e: any) {

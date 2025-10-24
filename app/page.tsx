@@ -53,17 +53,9 @@ export default function Page(){
 
   return (
     <div className="container">
-      <div className="header">
-        <h1 className="h1">DESI DOODLE DICTIONARY</h1>
-      </div>
+      <div className="header"><div className="headings"><h1 className="h1">THE DOODLE WALL</h1><div className="subh">(by The Desi Dictionary)</div></div></div></div></div>
 
-      <div className="intro">
-        <p>✏️ Add a word you learnt or love in your mother tongue — silly, sweet, or just so desi.</p>
-        <p>💬 Every word teaches someone something new.</p>
-        <p>🌸 Whatever your word is, doodle it and drop it on the wall.</p>
-        <p>💛 One word from you, one word learned by someone else.</p>
-        <p>🚫 No galis & rude words allowed please!!</p>
-      </div>
+      <div className="intro"><p>✏️ Add a word you've learnt or love from your mother tongue — sweet, silly or desi!</p><p>💬 Every word teaches someone something new.</p><p>💛 One word from you, one word learned by someone else.</p><p>🚫 No galis & rude words allowed please!!</p></div>
 
       <DrawingCanvas onExport={(d)=>setImg(d)} />
 
@@ -75,14 +67,16 @@ export default function Page(){
         <input className="input" value={meaning} onChange={e=>setMeaning(e.target.value)} placeholder="Meaning" />
       </div>
       {error && <p style={{color:'#b00020', textAlign:'center'}}>{error}</p>}
-      <div style={{textAlign:'center'}}>
+      <div style={{textAlign:"center"}}>
         <button className="addBtn" onClick={handleSubmit} disabled={submitting}>{submitting?'ADDING…':'💛 ADD TO WALL'}</button>
         <div className="note" style={{marginTop:6}}>Every word teaches someone something new.</div>
       </div>
 
-      <h2 className="title" style={{marginTop:'2rem', textAlign:'center'}}>WALL OF WORDS!</h2>
+      <hr className="divider" />
+<h2 className="title" style={{textAlign:"center"}}>The Wall of Words</h2>
+<div className="stat" style={{textAlign:"center",fontSize:14,opacity:.8,marginTop:4}}>{entries.length} doodles and counting</div>
 
-      {loading ? <p className="note" style={{textAlign:'center'}}>Loading…</p> : (
+      {loading ? <p className="note" style={{textAlign:"center"}}>Loading…</p> : (
         <div className="grid">
           {entries.map((e)=>(
             <button key={e.id} className="card" onClick={()=>share(e)} title="Share my Doodle Dictionary submission" aria-label="Share my Doodle Dictionary submission" style={{textAlign:'left', padding:0, cursor:'pointer'}}>
