@@ -5,7 +5,9 @@ import DrawingCanvas from "@/components/DrawingCanvas";
 import Toast from "@/components/Toast";
 
 export default function Page() {
-  const clearCanvasRef = useRef<() => void | null>(null);
+  const clearCanvasRef = useRef<(() => void) | null>(null) as {
+  current: (() => void) | null;
+};
   const [toastOpen, setToastOpen] = useState(false);
   const [language, setLanguage] = useState("Hindi");
   const [word, setWord] = useState("");
