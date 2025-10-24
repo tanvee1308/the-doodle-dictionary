@@ -1,9 +1,9 @@
+"use client";
 
-'use client';
-import React, { useEffect, useRef, useImperativeHandle, forwardRef } from "react";
+import React, { useEffect, useRef } from "react";
 
 interface DrawingCanvasProps {
-  onClear?: (clearFn: () => void) => void;
+  onClear?: (fn: () => void) => void;
 }
 
 const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ onClear }) => {
@@ -21,12 +21,20 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ onClear }) => {
     ctx.strokeStyle = "#000";
     ctxRef.current = ctx;
 
-    const clearCanvas = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-    };
-
+    const clearCanvas = () => ctx.clearRect(0, 0, canvas.width, canvas.height);
     if (onClear) onClear(clearCanvas);
   }, [onClear]);
+
+  const getPosition = (e: MouseEvent | TouchEvent) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+    const rect = canvas.getBoundingClientRect();
+    const x =
+      e instanceof TouchEvent ? e.touches[0].clientX - rect.left : (e as MouseEvent).clientX - rect.left;
+    const y =
+      e instanceof TouchEvent ? e.touches[0].clientY - rect.top : (e as MouseEvent).clientY - rect.top;
+    return { x, y };
+  };
 
   const startDrawing = (e: MouseEvent | TouchEvent) => {
     drawing.current = true;
@@ -40,16 +48,10 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ onClear }) => {
 
   const draw = (e: MouseEvent | TouchEvent) => {
     if (!drawing.current) return;
-    const canvas = canvasRef.current;
     const ctx = ctxRef.current;
-    if (!ctx || !canvas) return;
+    if (!ctx) return;
 
-    const rect = canvas.getBoundingClientRect();
-    const x =
-      e instanceof TouchEvent ? e.touches[0].clientX - rect.left : (e as MouseEvent).clientX - rect.left;
-    const y =
-      e instanceof TouchEvent ? e.touches[0].clientY - rect.top : (e as MouseEvent).clientY - rect.top;
-
+    const { x, y } = getPosition(e);
     ctx.lineTo(x, y);
     ctx.stroke();
     ctx.beginPath();
@@ -82,7 +84,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ onClear }) => {
       ref={canvasRef}
       width={250}
       height={150}
-      className="border border-yellow-400 rounded-xl bg-white shadow-sm"
+      className="border border-yellow-400 rounded-xl bg-white shadow-sm cursor-crosshair"
     />
   );
 };
