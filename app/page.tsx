@@ -54,7 +54,7 @@ export default function Page(){
   return (
     <div className="container">
       <div className="header">
-        <h1 className="h1">THE DOODLE DICTIONARY</h1>
+        <h1 className="h1">DESI DOODLE DICTIONARY</h1>
       </div>
 
       <div className="intro">
