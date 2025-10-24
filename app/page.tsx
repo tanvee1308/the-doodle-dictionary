@@ -92,13 +92,13 @@ export default function Page() {
 
       {/* --- FOOTER --- */}
       <p className="text-xs mt-6 text-[#9c8b7a] italic">
-        Every word teaches someone something new.
+        Every word teaches someone something new!
       </p>
 
       {/* --- TOAST --- */}
       <Toast
         show={toastOpen}
-        message="✨ Doodle etched in the wall!"
+        message="✨ Word etched in the wall!"
         onHide={() => setToastOpen(false)}
       />
     </div>
