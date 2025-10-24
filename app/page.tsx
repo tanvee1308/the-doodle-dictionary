@@ -1,104 +1,104 @@
-"use client";
 
-import { useState } from "react";
-import DrawingCanvas from "@/components/DrawingCanvas";
-import Toast from "@/components/Toast";
+'use client';
+import { useEffect, useState } from 'react';
+import DrawingCanvas from '../components/DrawingCanvas';
+import { makeShareImage } from '../lib/makeShareImage';
 
-export default function Page() {
-  const [clearCanvas, setClearCanvas] = useState<(() => void) | null>(null);
-  const [toastOpen, setToastOpen] = useState(false);
-  const [language, setLanguage] = useState("Hindi");
-  const [word, setWord] = useState("");
-  const [meaning, setMeaning] = useState("");
+type Entry = { id:string; imgUrl:string; word:string; meaning:string; language:string; createdAt:number };
 
-  async function handleAddToWall() {
-    clearCanvas?.();
-    setWord("");
-    setMeaning("");
-    setToastOpen(true);
+const LANGS = ['Hindi','Urdu','Marathi','Gujarati','Punjabi','Bengali','Tamil','Telugu','Malayalam','Kannada','Sindhi','Konkani','Odia','Sinhala','Nepali'];
+
+export default function Page(){
+  const [img,setImg]=useState<string|null>(null);
+  const [word,setWord]=useState('');
+  const [meaning,setMeaning]=useState('');
+  const [language,setLanguage]=useState('Hindi');
+  const [entries,setEntries]=useState<Entry[]>([]);
+  const [submitting,setSubmitting]=useState(false);
+  const [error,setError]=useState<string|null>(null);
+  const [loading,setLoading]=useState(true);
+
+  async function load(){
+    try{
+      const r=await fetch('/api/list',{cache:'no-store'});
+      const d=await r.json();
+      setEntries(d.entries||[]);
+    }finally{ setLoading(false); }
+  }
+  useEffect(()=>{ load(); },[]);
+
+  async function handleSubmit(){
+    if(!img){ setError('Please draw your word first.'); return; }
+    if(!meaning.trim()){ setError('Please add a meaning.'); return; }
+    setError(null); setSubmitting(true);
+    try{
+      const res = await fetch('/api/submit',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ word, meaning, language, dataUrl: img }) });
+      const out = await res.json();
+      if(!res.ok) throw new Error(out.error||'Failed to save');
+      setWord(''); setMeaning(''); setLanguage('Hindi'); setImg(null);
+      await load();
+    }catch(e:any){ setError(e.message||'Error'); }finally{ setSubmitting(false); }
+  }
+
+  async function share(entry: Entry){
+    const { blob, fileName } = await makeShareImage({ doodleUrl: entry.imgUrl, language: entry.language, meaning: entry.meaning, word: entry.word });
+    if (navigator.share && navigator.canShare?.({ files: [new File([blob], fileName)] })) {
+      await navigator.share({ title: 'MY DOODLE DICTIONARY SUBMISSION', text: `${entry.word?entry.word+' — ':''}${entry.meaning} (${entry.language})`, files: [new File([blob], fileName, { type: 'image/png' })] });
+    } else {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = fileName; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+      alert('Saved image. You can share it from your gallery 📲');
+    }
   }
 
   return (
-    <main className="min-h-screen bg-[#fffdf8] flex flex-col items-center justify-center px-6 py-12 text-center font-sans">
-      {/* Title */}
-      <h1
-        className="font-[DesiDictionaryDoodles-Regular] text-4xl mb-6 text-[#2d1b10]"
-        style={{ letterSpacing: "1px" }}
-      >
-        DESI DOODLE DICTIONARY
-      </h1>
+    <div className="container">
+      <div className="header">
+        <h1 className="h1">THE DOODLE DICTIONARY</h1>
+      </div>
 
-      {/* Description text */}
-      <div className="max-w-lg text-[#5b4636] text-base leading-relaxed mb-6 space-y-1">
-        <p>✏️ Add a word you learnt or love in your mother tongue — silly, sweet or desi!</p>
+      <div className="intro">
+        <p>✏️ Add a word you learnt or love in your mother tongue — silly, sweet, or just so desi.</p>
         <p>💬 Every word teaches someone something new.</p>
         <p>🌸 Whatever your word is, doodle it and drop it on the wall.</p>
-        <p>💛 One word from you, one word learnt by someone else.</p>
+        <p>💛 One word from you, one word learned by someone else.</p>
         <p>🚫 No galis & rude words allowed please!!</p>
       </div>
 
-      {/* Doodle box wrapper */}
-      <div className="flex flex-col items-center justify-center mb-6">
-        <div className="bg-[#fffaf0] border border-yellow-300 rounded-3xl shadow-md p-4">
-          <DrawingCanvas onClear={(fn) => setClearCanvas(() => fn)} />
-        </div>
-      </div>
+      <DrawingCanvas onExport={(d)=>setImg(d)} />
 
-      {/* Input fields */}
-      <div className="flex flex-wrap justify-center items-center gap-3 text-sm text-[#2d1b10] mb-5">
-        <select
-          value={language}
-          onChange={(e) => setLanguage(e.target.value)}
-          className="border border-yellow-400 rounded-full px-3 py-1 bg-white outline-none hover:bg-yellow-50"
-        >
-          <option>Hindi</option>
-          <option>Gujarati</option>
-          <option>Marathi</option>
-          <option>Punjabi</option>
-          <option>Tamil</option>
-          <option>Telugu</option>
-          <option>Malayalam</option>
-          <option>Bengali</option>
-          <option>Urdu</option>
-          <option>Sinhala</option>
-          <option>Nepali</option>
+      <div className="inputRow">
+        <select className="select" value={language} onChange={(e)=>setLanguage(e.target.value)}>
+          {LANGS.map(l=> <option key={l} value={l}>{l}</option>)}
         </select>
-
-        <input
-          type="text"
-          placeholder="Word (optional)"
-          value={word}
-          onChange={(e) => setWord(e.target.value)}
-          className="border border-yellow-400 rounded-full px-3 py-1 w-32 text-center outline-none hover:bg-yellow-50"
-        />
-
-        <input
-          type="text"
-          placeholder="Meaning"
-          value={meaning}
-          onChange={(e) => setMeaning(e.target.value)}
-          className="border border-yellow-400 rounded-full px-3 py-1 w-32 text-center outline-none hover:bg-yellow-50"
-        />
+        <input className="input" value={word} onChange={e=>setWord(e.target.value)} placeholder="Word (optional)" />
+        <input className="input" value={meaning} onChange={e=>setMeaning(e.target.value)} placeholder="Meaning" />
+      </div>
+      {error && <p style={{color:'#b00020', textAlign:'center'}}>{error}</p>}
+      <div style={{textAlign:'center'}}>
+        <button className="addBtn" onClick={handleSubmit} disabled={submitting}>{submitting?'ADDING…':'💛 ADD TO WALL'}</button>
+        <div className="note" style={{marginTop:6}}>Every word teaches someone something new.</div>
       </div>
 
-      {/* Button */}
-      <button
-        onClick={handleAddToWall}
-        className="px-6 py-2 rounded-full bg-yellow-400 hover:bg-yellow-500 text-[#2d1b10] font-medium text-sm shadow transition-transform hover:scale-105"
-      >
-        💛 Add to Wall
-      </button>
+      <h2 className="title" style={{marginTop:'2rem', textAlign:'center'}}>WALL OF WORDS!</h2>
 
-      <p className="text-xs mt-6 text-[#9c8b7a] italic">
-        ✨ Doodle etched in the wall!
-      </p>
+      {loading ? <p className="note" style={{textAlign:'center'}}>Loading…</p> : (
+        <div className="grid">
+          {entries.map((e)=>(
+            <button key={e.id} className="card" onClick={()=>share(e)} title="Share my Doodle Dictionary submission" aria-label="Share my Doodle Dictionary submission" style={{textAlign:'left', padding:0, cursor:'pointer'}}>
+              <span className="cardTopCorner" aria-hidden />
+              <span className="cardBottomCorner" aria-hidden />
+              <div className="badge">{e.language}</div>
+              <img src={e.imgUrl} alt={e.word||'Doodle'} style={{width:'100%', display:'block', aspectRatio:'4 / 3', objectFit:'cover'}}/>
+              <div className="footerStrip">
+                {e.word && <div style={{fontWeight:800, marginBottom:2}}>{e.word}</div>}
+                <div style={{fontSize:14, lineHeight:1.35}}>{e.meaning}</div>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
 
-      {/* Toast */}
-      <Toast
-        show={toastOpen}
-        message="Doodle etched in the wall!"
-        onHide={() => setToastOpen(false)}
-      />
-    </main>
+    </div>
   );
 }
