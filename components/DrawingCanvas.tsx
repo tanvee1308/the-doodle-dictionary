@@ -1,28 +1,42 @@
 
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useEffect } from "react";
 
-type Props = { onExport: (dataUrl: string) => void };
+export default function DrawingCanvas({ onClear }: { onClear?: () => void }) {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
 
-const COLORS = ['#4c2c2c','#f2a007','#1e88e5','#2a7f62','#e91e63','#000000','#ffffff'];
-const SIZES = [2,4,6,10,16];
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const ctx = canvas.getContext("2d");
+      ctxRef.current = ctx;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = "#000";
+    }
+  }, []);
 
-export default function DrawingCanvas({ onExport }: Props) {
-  const cRef = useRef<HTMLCanvasElement|null>(null);
-  const ctxRef = useRef<CanvasRenderingContext2D|null>(null);
-  const [drawing,setDrawing]=useState(false);
-  const [color,setColor]=useState(COLORS[0]);
-  const [size,setSize]=useState(6);
-  const [history,setHistory]=useState<ImageData[]>([]);
+  const clearCanvas = () => {
+    const canvas = canvasRef.current;
+    const ctx = ctxRef.current;
+    if (canvas && ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+  };
 
-  useEffect(()=>{
-    const c=cRef.current!;
-    c.width=560; c.height=360;
-    const ctx=c.getContext('2d')!;
-    ctxRef.current=ctx;
-    reset();
-  },[]);
+  // 👇 allow the parent page to trigger clearing
+  useEffect(() => {
+    if (onClear) onClear(clearCanvas);
+  }, [onClear]);
 
+  return (
+    <canvas
+      ref={canvasRef}
+      width={400}
+      height={200}
+      className="border rounded-lg bg-white"
+    />
+  );
   useEffect(()=>{
     if(!ctxRef.current) return;
     const ctx=ctxRef.current;
