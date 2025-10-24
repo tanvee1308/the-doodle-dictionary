@@ -11,19 +11,18 @@ export default function Page() {
   const [word, setWord] = useState("");
   const [meaning, setMeaning] = useState("");
 
-  const handleAddToWall = async () => {
-    // (Replace with your upload logic)
-    // const blob = await canvasRef.current?.toBlob("image/png");
-    // await fetch("/api/upload", { method: "POST", body: blob });
-
-    // simulate success
+  async function handleAddToWall() {
+    // TODO: your real upload here
+    // after success:
     clearCanvasRef.current?.();
+    setWord("");
+    setMeaning("");
     setToastOpen(true);
-  };
+  }
 
   return (
-    <div className="min-h-screen bg-[#fffdf8] flex flex-col items-center justify-center px-6 py-12 text-center">
-      {/* --- HEADER --- */}
+    <main className="min-h-screen bg-[#fffdf8] flex flex-col items-center justify-center px-6 py-12 text-center">
+      {/* Header */}
       <h1
         className="font-[DesiDictionaryDoodles-Regular] text-3xl sm:text-4xl mb-3 tracking-wide"
         style={{ textTransform: "uppercase", letterSpacing: "1px" }}
@@ -31,7 +30,7 @@ export default function Page() {
         DESI DOODLE DICTIONARY
       </h1>
 
-      {/* --- SUBTEXT --- */}
+      {/* Intro copy */}
       <div className="max-w-md text-[#5b4636] text-[15px] leading-relaxed space-y-1 mb-6">
         <p>🪶 Add a word you learnt or love in your mother tongue — silly, sweet or desi!</p>
         <p>💬 Every word teaches someone something new.</p>
@@ -40,17 +39,17 @@ export default function Page() {
         <p>🚫 No galis & rude words allowed please!!</p>
       </div>
 
-      {/* --- DOODLE BOX --- */}
-      <div className="bg-[#fffaf0] border border-yellow-300 rounded-2xl shadow-md p-3 flex flex-col items-center justify-center">
+      {/* Doodle box (smaller & centered) */}
+      <div className="bg-[#fffaf0] border border-yellow-300 rounded-2xl shadow-md p-3">
         <DrawingCanvas onClear={(fn) => (clearCanvasRef.current = fn)} />
       </div>
 
-      {/* --- INPUTS --- */}
+      {/* Inputs */}
       <div className="flex flex-wrap justify-center items-center gap-3 mt-5 mb-3 text-sm text-[#2d1b10]">
         <select
           value={language}
           onChange={(e) => setLanguage(e.target.value)}
-          className="border border-yellow-400 rounded-full px-3 py-1 bg-white text-[#2d1b10] outline-none hover:bg-yellow-50"
+          className="border border-yellow-400 rounded-full px-3 py-1 bg-white outline-none hover:bg-yellow-50"
         >
           <option>Hindi</option>
           <option>Gujarati</option>
@@ -82,7 +81,7 @@ export default function Page() {
         />
       </div>
 
-      {/* --- BUTTON --- */}
+      {/* Single action (no 'Use this doodle' button) */}
       <button
         onClick={handleAddToWall}
         className="mt-2 px-6 py-2 rounded-full bg-yellow-400 hover:bg-yellow-500 text-[#2d1b10] font-medium text-sm shadow transition-transform hover:scale-105"
@@ -90,17 +89,16 @@ export default function Page() {
         💛 Add to Wall
       </button>
 
-      {/* --- FOOTER --- */}
       <p className="text-xs mt-6 text-[#9c8b7a] italic">
-        Every word teaches someone something new!
+        Every word teaches someone something new.
       </p>
 
-      {/* --- TOAST --- */}
+      {/* Toast */}
       <Toast
         show={toastOpen}
-        message="✨ Word etched in the wall!"
+        message="Doodle etched in the wall!"
         onHide={() => setToastOpen(false)}
       />
-    </div>
+    </main>
   );
 }
