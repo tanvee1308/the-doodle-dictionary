@@ -60,8 +60,8 @@ export default function Page(){
       <div className="intro">
         <p>✏️ Add a word you love — silly, sweet, or just so desi.</p>
         <p>💬 Every word teaches someone something new.</p>
-        <p>🌸 Aiyo! Arrey! Oye! Whatever your word is, doodle it and drop it on the wall.</p>
-        <p>💛 One word from you, one word learned by someone else.</p>
+        <p>🌸 Whatever your word is, doodle it and drop it on the wall.</p>
+        <p>💛 One word from you, one learned by you & one learned by someone else.</p>
         <p>🚫 No galis & rude words allowed please!!</p>
       </div>
 
