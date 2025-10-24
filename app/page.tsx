@@ -53,7 +53,12 @@ export default function Page(){
 
   return (
     <div className="container">
-      <div className="header"><div className="headings"><h1 className="h1">THE DOODLE WALL</h1><div className="subh">(by The Desi Dictionary)</div></div></div></div></div>
+      <div className="header">
+  <div className="headings">
+    <h1 className="h1">THE DOODLE WALL</h1>
+    <div className="subh">(by The Desi Dictionary)</div>
+  </div>
+</div></div></div>
 
       <div className="intro"><p>✏️ Add a word you've learnt or love from your mother tongue — sweet, silly or desi!</p><p>💬 Every word teaches someone something new.</p><p>💛 One word from you, one word learned by someone else.</p><p>🚫 No galis & rude words allowed please!!</p></div>
 
