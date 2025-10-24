@@ -4,4 +4,4 @@ const nextConfig = {
   experimental: { typedRoutes: true }
 };
 
-module.exports = nextConfig;
+export default nextConfig;
