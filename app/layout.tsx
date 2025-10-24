@@ -1,17 +1,15 @@
+export const metadata = {
+  title: 'The Doodle Wall — The Desi Dictionary',
+  description: 'Add a word you’ve learnt or love from your mother tongue — sweet, silly or desi!',
+};
 
 import './globals.css';
-
-export const metadata = {
-  title: 'The Doodle Dictionary',
-  description: 'Add a word you love — silly, sweet, or just so desi. No galis 💛',
-};
+import React from 'react';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>
-        {children}
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

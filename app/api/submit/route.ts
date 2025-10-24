@@ -1,9 +1,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
-import { put } from '@vercel/blob';
-import { kv } from '@vercel/kv';
-
-
+import { put, list } from '@vercel/blob';
 // --- BEGIN family-friendly profanity filter (supports variants with *, spaces, punctuation) ---
 const profanityPattern = new RegExp(
   String.raw`(?:fuck|f[\W_]*u[\W_]*c[\W_]*k|f\*+ck|f\W*ck|fck|f\W*u\W*c\W*k|shit|s[\W_]*h[\W_]*i[\W_]*t|s\*+it|bitch|b[\W_]*i[\W_]*t[\W_]*c[\W_]*h|b\*+tch|bastard|asshole|a[\W_]*s[\W_]*s[\W_]*h[\W_]*o[\W_]*l[\W_]*e|dick|cock|pussy|slut|whore|cunt|bollocks|wanker|bugger|crap|bloody|arse|fag|twat|retard|retarded|nigger|nigga|bhench?o+d|bhe?nc[h\W_]*o[\W_]*d|bh[e3]n\W*c\W*h\W*o\W*d|b\*+nch\*+d|madarcho+d|mada+r\W*c[h\W_]*o[\W_]*d|m\*+d\*+ch\*+d|cho+ti?ya|chut[iy]a|ch?o+ti?ya|chu+ti+ya|ch\*+tiya|cho+ot|chut|ch\*+t|lund|la?vd[aao]|lavda|l\*+nda?|randi|rand[iy]|r\*+ndi|harami|haraam[iy]|h\*+rami|gandu|ga+ndu|g\*+ndu|kutti|kutte|kuttey|k\*+ttey|bhosdi?ke?|bhosri?ke|bh[o0]sd[iy]ke|bh\*+sd\*+ke|gaand|g[a\*]+nd|saale|s[a\*]+le|s[a\*]+la|bakchod|bakch[o0]d|bakch\*+d|kamina|kamine|kamin[eai]|ullu|ullu[ ]?ka|ullu\W*ka|lavde|lawde)`,
@@ -42,8 +39,25 @@ export async function POST(req: NextRequest) {
       createdAt: Date.now(),
     };
 
-    await kv.lpush('doodles:entries', JSON.stringify(entry));
-    await kv.ltrim('doodles:entries', 0, 499);
+    // Load existing entries.json from blob (if present)
+    let entries:any[] = [];
+    try {
+      const listed = await list({ prefix: 'doodles/entries.json' });
+      if (listed.blobs && listed.blobs.length > 0) {
+        const url = listed.blobs[0].url;
+        const resp = await fetch(url);
+        if (resp.ok) {
+          entries = await resp.json();
+        }
+      }
+    } catch {}
+
+    // Prepend and trim
+    entries.unshift(entry);
+    entries = entries.slice(0, 500);
+
+    // Save back to blob
+    await put('doodles/entries.json', JSON.stringify(entries), { access: 'public', contentType: 'application/json' });
 
     return NextResponse.json({ ok: true, entry });
   } catch (e: any) {

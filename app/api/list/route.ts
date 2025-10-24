@@ -1,8 +1,19 @@
-
 import { NextResponse } from 'next/server';
-import { kv } from '@vercel/kv';
+import { list } from '@vercel/blob';
+
 export async function GET() {
-  const raw = await kv.lrange('doodles:entries', 0, 299);
-  const entries = raw.map((s: string) => JSON.parse(s));
-  return NextResponse.json({ entries });
+  try {
+    const listed = await list({ prefix: 'doodles/entries.json' });
+    if (listed.blobs && listed.blobs.length > 0) {
+      const url = listed.blobs[0].url;
+      const resp = await fetch(url, { cache: 'no-store' });
+      if (resp.ok) {
+        const entries = await resp.json();
+        return NextResponse.json({ entries });
+      }
+    }
+    return NextResponse.json({ entries: [] });
+  } catch {
+    return NextResponse.json({ entries: [] });
+  }
 }
