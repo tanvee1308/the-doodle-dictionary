@@ -28,7 +28,7 @@ export default function Page() {
         className="font-[DesiDictionaryDoodles-Regular] text-3xl sm:text-4xl mb-3 tracking-wide"
         style={{ textTransform: "uppercase", letterSpacing: "1px" }}
       >
-        THE DOODLE DICTIONARY
+        DESI DOODLE DICTIONARY
       </h1>
 
       {/* --- SUBTEXT --- */}
