@@ -1,30 +1,31 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import DrawingCanvas from "@/components/DrawingCanvas";
 import Toast from "@/components/Toast";
 
 export default function Page() {
-  const clearCanvasRef = useRef<(() => void) | null>(null) as {
-  current: (() => void) | null;
-};
+  // store the clear function from <DrawingCanvas />
+  const [clearCanvas, setClearCanvas] = useState<(() => void) | null>(null);
+
   const [toastOpen, setToastOpen] = useState(false);
   const [language, setLanguage] = useState("Hindi");
   const [word, setWord] = useState("");
   const [meaning, setMeaning] = useState("");
 
   async function handleAddToWall() {
-    // TODO: your real upload here
+    // TODO: wire your upload here
+
     // after success:
-    clearCanvasRef.current?.();
+    clearCanvas?.();          // wipe the drawing
     setWord("");
     setMeaning("");
-    setToastOpen(true);
+    setToastOpen(true);       // show “etched” toast
   }
 
   return (
     <main className="min-h-screen bg-[#fffdf8] flex flex-col items-center justify-center px-6 py-12 text-center">
-      {/* Header */}
+      {/* Title */}
       <h1
         className="font-[DesiDictionaryDoodles-Regular] text-3xl sm:text-4xl mb-3 tracking-wide"
         style={{ textTransform: "uppercase", letterSpacing: "1px" }}
@@ -41,9 +42,10 @@ export default function Page() {
         <p>🚫 No galis & rude words allowed please!!</p>
       </div>
 
-      {/* Doodle box (smaller & centered) */}
+      {/* Doodle box (smaller & centred) */}
       <div className="bg-[#fffaf0] border border-yellow-300 rounded-2xl shadow-md p-3">
-        <DrawingCanvas onClear={(fn) => (clearCanvasRef.current = fn)} />
+        {/* give the canvas a place to hand us its clear() function */}
+        <DrawingCanvas onClear={(fn) => setClearCanvas(() => fn)} />
       </div>
 
       {/* Inputs */}
@@ -83,7 +85,7 @@ export default function Page() {
         />
       </div>
 
-      {/* Single action (no 'Use this doodle' button) */}
+      {/* Single action */}
       <button
         onClick={handleAddToWall}
         className="mt-2 px-6 py-2 rounded-full bg-yellow-400 hover:bg-yellow-500 text-[#2d1b10] font-medium text-sm shadow transition-transform hover:scale-105"
@@ -92,7 +94,7 @@ export default function Page() {
       </button>
 
       <p className="text-xs mt-6 text-[#9c8b7a] italic">
-        Every word teaches someone something new.
+        Every word teaches someone something new!
       </p>
 
       {/* Toast */}
