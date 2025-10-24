@@ -1,102 +1,90 @@
 
 'use client';
-import { useRef, useEffect } from "react";
+import React, { useEffect, useRef, useImperativeHandle, forwardRef } from "react";
 
-export default function DrawingCanvas({ onClear }: { onClear?: () => void }) {
+interface DrawingCanvasProps {
+  onClear?: (clearFn: () => void) => void;
+}
+
+const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ onClear }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
+  const drawing = useRef(false);
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (canvas) {
-      const ctx = canvas.getContext("2d");
-      ctxRef.current = ctx;
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
-      ctx.lineWidth = 4;
-      ctx.strokeStyle = "#000";
-    }
-  }, []);
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.lineWidth = 4;
+    ctx.lineCap = "round";
+    ctx.strokeStyle = "#000";
+    ctxRef.current = ctx;
 
-  const clearCanvas = () => {
-    const canvas = canvasRef.current;
-    const ctx = ctxRef.current;
-    if (canvas && ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
-  };
+    const clearCanvas = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    };
 
-  // 👇 allow the parent page to trigger clearing
-  useEffect(() => {
     if (onClear) onClear(clearCanvas);
   }, [onClear]);
+
+  const startDrawing = (e: MouseEvent | TouchEvent) => {
+    drawing.current = true;
+    draw(e);
+  };
+
+  const stopDrawing = () => {
+    drawing.current = false;
+    ctxRef.current?.beginPath();
+  };
+
+  const draw = (e: MouseEvent | TouchEvent) => {
+    if (!drawing.current) return;
+    const canvas = canvasRef.current;
+    const ctx = ctxRef.current;
+    if (!ctx || !canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const x =
+      e instanceof TouchEvent ? e.touches[0].clientX - rect.left : (e as MouseEvent).clientX - rect.left;
+    const y =
+      e instanceof TouchEvent ? e.touches[0].clientY - rect.top : (e as MouseEvent).clientY - rect.top;
+
+    ctx.lineTo(x, y);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+  };
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    canvas.addEventListener("mousedown", startDrawing);
+    canvas.addEventListener("mouseup", stopDrawing);
+    canvas.addEventListener("mousemove", draw);
+    canvas.addEventListener("touchstart", startDrawing);
+    canvas.addEventListener("touchend", stopDrawing);
+    canvas.addEventListener("touchmove", draw);
+
+    return () => {
+      canvas.removeEventListener("mousedown", startDrawing);
+      canvas.removeEventListener("mouseup", stopDrawing);
+      canvas.removeEventListener("mousemove", draw);
+      canvas.removeEventListener("touchstart", startDrawing);
+      canvas.removeEventListener("touchend", stopDrawing);
+      canvas.removeEventListener("touchmove", draw);
+    };
+  }, []);
 
   return (
     <canvas
       ref={canvasRef}
-      width={400}
-      height={200}
-      className="border rounded-lg bg-white"
+      width={250}
+      height={150}
+      className="border border-yellow-400 rounded-xl bg-white shadow-sm"
     />
   );
-  useEffect(()=>{
-    if(!ctxRef.current) return;
-    const ctx=ctxRef.current;
-    ctx.lineWidth=size;
-    ctx.strokeStyle=color;
-    ctx.lineCap='round'; ctx.lineJoin='round';
-  },[size,color]);
+};
 
-  const getPos=(e:any)=>{
-    const rect=cRef.current!.getBoundingClientRect();
-    const X=e.touches?e.touches[0].clientX:e.clientX;
-    const Y=e.touches?e.touches[0].clientY:e.clientY;
-    return {x:X-rect.left,y:Y-rect.top};
-  };
-
-  function start(e:any){
-    setDrawing(true);
-    const {x,y}=getPos(e);
-    const ctx=ctxRef.current!;
-    ctx.beginPath(); ctx.moveTo(x,y);
-    try{ setHistory(h=>[ctx.getImageData(0,0,cRef.current!.width,cRef.current!.height),...h].slice(0,40)); }catch{}
-  }
-  function move(e:any){ if(!drawing)return; const {x,y}=getPos(e); const ctx=ctxRef.current!; ctx.lineTo(x,y); ctx.stroke(); }
-  function end(){ setDrawing(false); }
-
-  function reset(){
-    const c=cRef.current!; const ctx=ctxRef.current!;
-    ctx.fillStyle='#fffaf3'; ctx.fillRect(0,0,c.width,c.height);
-    ctx.strokeStyle=color; ctx.lineWidth=size;
-  }
-  function undo(){
-    const ctx=ctxRef.current!, c=cRef.current!;
-    setHistory(h=>{ if(!h.length) return h; const [last,...rest]=h; ctx.putImageData(last,0,0); return rest; });
-  }
-  function exportPNG(){ onExport(cRef.current!.toDataURL('image/png')); }
-
-  return (
-    <div>
-      <canvas
-        className="canvasFrame"
-        ref={cRef}
-        onMouseDown={start} onMouseMove={move} onMouseUp={end} onMouseLeave={end}
-        onTouchStart={start} onTouchMove={move} onTouchEnd={end}
-        style={{display:'block'}}
-      />
-      <div className="toolbar">
-        <div style={{display:'flex',gap:6}}>
-          {COLORS.map(c=>(
-            <button key={c} className="swatch" onClick={()=>setColor(c)} style={{background:c, outline: c===color?'2px solid #3336':'none'}} aria-label={'color '+c}/>
-          ))}
-        </div>
-        <div style={{display:'flex',gap:6}}>
-          {SIZES.map(s=>(
-            <button key={s} onClick={()=>setSize(s)} style={{border:'1px solid #e6d5c4',borderRadius:10,background:'#fff',padding:'.25rem .6rem'}}>{s}px</button>
-          ))}
-        </div>
-        <button onClick={undo} style={{border:'1px solid #e6d5c4',borderRadius:10,background:'#fff',padding:'.4rem .7rem'}}>Undo</button>
-        <button onClick={reset} style={{border:'1px solid #e6d5c4',borderRadius:10,background:'#fff',padding:'.4rem .7rem'}}>Clear</button>
-        <button onClick={exportPNG} style={{border:'none',borderRadius:12,background:'#f2a007',color:'#4c2c2c',padding:'.5rem .8rem',fontWeight:800}}>Use this doodle</button>
-      </div>
-    </div>
-  );
-}
+export default DrawingCanvas;
