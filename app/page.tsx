@@ -19,31 +19,33 @@ export default function Page() {
   }
 
   return (
-    <main className="min-h-screen bg-[#fffdf8] flex flex-col items-center justify-center text-center px-6 py-10 font-sans">
+    <main className="min-h-screen bg-[#fffdf8] flex flex-col items-center justify-center px-6 py-12 text-center font-sans">
       {/* Title */}
       <h1
-        className="font-[DesiDictionaryDoodles-Regular] text-4xl mb-5"
+        className="font-[DesiDictionaryDoodles-Regular] text-4xl mb-6 text-[#2d1b10]"
         style={{ letterSpacing: "1px" }}
       >
         DESI DOODLE DICTIONARY
       </h1>
 
-      {/* Text */}
-      <div className="max-w-md text-[#5b4636] text-base leading-relaxed mb-6 space-y-1">
-        <p>🪶 Add a word you learnt or love in your mother tongue — silly, sweet or desi!</p>
+      {/* Description text */}
+      <div className="max-w-lg text-[#5b4636] text-base leading-relaxed mb-6 space-y-1">
+        <p>✏️ Add a word you learnt or love in your mother tongue — silly, sweet or desi!</p>
         <p>💬 Every word teaches someone something new.</p>
         <p>🌸 Whatever your word is, doodle it and drop it on the wall.</p>
         <p>💛 One word from you, one word learnt by someone else.</p>
         <p>🚫 No galis & rude words allowed please!!</p>
       </div>
 
-      {/* Doodle Box */}
-      <div className="bg-[#fffaf0] border border-yellow-300 rounded-2xl shadow-md p-3 mb-5 flex flex-col items-center justify-center">
-        <DrawingCanvas onClear={(fn) => setClearCanvas(() => fn)} />
+      {/* Doodle box wrapper */}
+      <div className="flex flex-col items-center justify-center mb-6">
+        <div className="bg-[#fffaf0] border border-yellow-300 rounded-3xl shadow-md p-4">
+          <DrawingCanvas onClear={(fn) => setClearCanvas(() => fn)} />
+        </div>
       </div>
 
-      {/* Inputs */}
-      <div className="flex flex-wrap justify-center items-center gap-3 text-sm text-[#2d1b10] mb-4">
+      {/* Input fields */}
+      <div className="flex flex-wrap justify-center items-center gap-3 text-sm text-[#2d1b10] mb-5">
         <select
           value={language}
           onChange={(e) => setLanguage(e.target.value)}
@@ -88,7 +90,7 @@ export default function Page() {
       </button>
 
       <p className="text-xs mt-6 text-[#9c8b7a] italic">
-        Every word teaches someone something new!
+        ✨ Doodle etched in the wall!
       </p>
 
       {/* Toast */}
