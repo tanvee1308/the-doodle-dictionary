@@ -22,68 +22,50 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ onClear }) => {
     ctxRef.current = ctx;
 
     const clearCanvas = () => ctx.clearRect(0, 0, canvas.width, canvas.height);
-    if (onClear) onClear(clearCanvas);
+    onClear?.(clearCanvas);
   }, [onClear]);
 
-  const getPosition = (e: MouseEvent | TouchEvent) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return { x: 0, y: 0 };
-    const rect = canvas.getBoundingClientRect();
-    const x =
-      e instanceof TouchEvent ? e.touches[0].clientX - rect.left : (e as MouseEvent).clientX - rect.left;
-    const y =
-      e instanceof TouchEvent ? e.touches[0].clientY - rect.top : (e as MouseEvent).clientY - rect.top;
+  const pos = (e: MouseEvent | TouchEvent) => {
+    const c = canvasRef.current!;
+    const r = c.getBoundingClientRect();
+    const x = e instanceof TouchEvent ? e.touches[0].clientX - r.left : (e as MouseEvent).clientX - r.left;
+    const y = e instanceof TouchEvent ? e.touches[0].clientY - r.top  : (e as MouseEvent).clientY - r.top;
     return { x, y };
   };
 
-  const startDrawing = (e: MouseEvent | TouchEvent) => {
-    drawing.current = true;
-    draw(e);
-  };
-
-  const stopDrawing = () => {
-    drawing.current = false;
-    ctxRef.current?.beginPath();
-  };
+  const start = (e: MouseEvent | TouchEvent) => { drawing.current = true; draw(e); };
+  const stop  = () => { drawing.current = false; ctxRef.current?.beginPath(); };
 
   const draw = (e: MouseEvent | TouchEvent) => {
     if (!drawing.current) return;
-    const ctx = ctxRef.current;
-    if (!ctx) return;
-
-    const { x, y } = getPosition(e);
-    ctx.lineTo(x, y);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(x, y);
+    const ctx = ctxRef.current; if (!ctx) return;
+    const { x, y } = pos(e);
+    ctx.lineTo(x, y); ctx.stroke(); ctx.beginPath(); ctx.moveTo(x, y);
   };
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    canvas.addEventListener("mousedown", startDrawing);
-    canvas.addEventListener("mouseup", stopDrawing);
-    canvas.addEventListener("mousemove", draw);
-    canvas.addEventListener("touchstart", startDrawing);
-    canvas.addEventListener("touchend", stopDrawing);
-    canvas.addEventListener("touchmove", draw);
-
+    const c = canvasRef.current; if (!c) return;
+    c.addEventListener("mousedown", start);
+    c.addEventListener("mouseup",   stop);
+    c.addEventListener("mousemove", draw);
+    c.addEventListener("touchstart", start);
+    c.addEventListener("touchend",   stop);
+    c.addEventListener("touchmove",  draw);
     return () => {
-      canvas.removeEventListener("mousedown", startDrawing);
-      canvas.removeEventListener("mouseup", stopDrawing);
-      canvas.removeEventListener("mousemove", draw);
-      canvas.removeEventListener("touchstart", startDrawing);
-      canvas.removeEventListener("touchend", stopDrawing);
-      canvas.removeEventListener("touchmove", draw);
+      c.removeEventListener("mousedown", start);
+      c.removeEventListener("mouseup",   stop);
+      c.removeEventListener("mousemove", draw);
+      c.removeEventListener("touchstart", start);
+      c.removeEventListener("touchend",   stop);
+      c.removeEventListener("touchmove",  draw);
     };
   }, []);
 
   return (
     <canvas
       ref={canvasRef}
-      width={250}
-      height={150}
+      width={260}
+      height={160}
       className="border border-yellow-400 rounded-xl bg-white shadow-sm cursor-crosshair"
     />
   );
