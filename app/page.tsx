@@ -5,36 +5,31 @@ import DrawingCanvas from "@/components/DrawingCanvas";
 import Toast from "@/components/Toast";
 
 export default function Page() {
-  // store the clear function from <DrawingCanvas />
   const [clearCanvas, setClearCanvas] = useState<(() => void) | null>(null);
-
   const [toastOpen, setToastOpen] = useState(false);
   const [language, setLanguage] = useState("Hindi");
   const [word, setWord] = useState("");
   const [meaning, setMeaning] = useState("");
 
   async function handleAddToWall() {
-    // TODO: wire your upload here
-
-    // after success:
-    clearCanvas?.();          // wipe the drawing
+    clearCanvas?.();
     setWord("");
     setMeaning("");
-    setToastOpen(true);       // show “etched” toast
+    setToastOpen(true);
   }
 
   return (
-    <main className="min-h-screen bg-[#fffdf8] flex flex-col items-center justify-center px-6 py-12 text-center">
+    <main className="min-h-screen bg-[#fffdf8] flex flex-col items-center justify-center text-center px-6 py-10 font-sans">
       {/* Title */}
       <h1
-        className="font-[DesiDictionaryDoodles-Regular] text-3xl sm:text-4xl mb-3 tracking-wide"
-        style={{ textTransform: "uppercase", letterSpacing: "1px" }}
+        className="font-[DesiDictionaryDoodles-Regular] text-4xl mb-5"
+        style={{ letterSpacing: "1px" }}
       >
         DESI DOODLE DICTIONARY
       </h1>
 
-      {/* Intro copy */}
-      <div className="max-w-md text-[#5b4636] text-[15px] leading-relaxed space-y-1 mb-6">
+      {/* Text */}
+      <div className="max-w-md text-[#5b4636] text-base leading-relaxed mb-6 space-y-1">
         <p>🪶 Add a word you learnt or love in your mother tongue — silly, sweet or desi!</p>
         <p>💬 Every word teaches someone something new.</p>
         <p>🌸 Whatever your word is, doodle it and drop it on the wall.</p>
@@ -42,14 +37,13 @@ export default function Page() {
         <p>🚫 No galis & rude words allowed please!!</p>
       </div>
 
-      {/* Doodle box (smaller & centred) */}
-      <div className="bg-[#fffaf0] border border-yellow-300 rounded-2xl shadow-md p-3">
-        {/* give the canvas a place to hand us its clear() function */}
+      {/* Doodle Box */}
+      <div className="bg-[#fffaf0] border border-yellow-300 rounded-2xl shadow-md p-3 mb-5 flex flex-col items-center justify-center">
         <DrawingCanvas onClear={(fn) => setClearCanvas(() => fn)} />
       </div>
 
       {/* Inputs */}
-      <div className="flex flex-wrap justify-center items-center gap-3 mt-5 mb-3 text-sm text-[#2d1b10]">
+      <div className="flex flex-wrap justify-center items-center gap-3 text-sm text-[#2d1b10] mb-4">
         <select
           value={language}
           onChange={(e) => setLanguage(e.target.value)}
@@ -73,7 +67,7 @@ export default function Page() {
           placeholder="Word (optional)"
           value={word}
           onChange={(e) => setWord(e.target.value)}
-          className="border border-yellow-400 rounded-full px-3 py-1 w-28 text-center outline-none hover:bg-yellow-50"
+          className="border border-yellow-400 rounded-full px-3 py-1 w-32 text-center outline-none hover:bg-yellow-50"
         />
 
         <input
@@ -85,10 +79,10 @@ export default function Page() {
         />
       </div>
 
-      {/* Single action */}
+      {/* Button */}
       <button
         onClick={handleAddToWall}
-        className="mt-2 px-6 py-2 rounded-full bg-yellow-400 hover:bg-yellow-500 text-[#2d1b10] font-medium text-sm shadow transition-transform hover:scale-105"
+        className="px-6 py-2 rounded-full bg-yellow-400 hover:bg-yellow-500 text-[#2d1b10] font-medium text-sm shadow transition-transform hover:scale-105"
       >
         💛 Add to Wall
       </button>
