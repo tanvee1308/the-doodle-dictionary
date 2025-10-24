@@ -1,103 +1,199 @@
-
 'use client';
-import { useEffect, useState } from 'react';
+
+import React, { useEffect, useState } from 'react';
 import DrawingCanvas from '../components/DrawingCanvas';
-import { makeShareImage } from '../lib/makeShareImage';
 
-type Entry = { id:string; imgUrl:string; word:string; meaning:string; language:string; createdAt:number };
+type Entry = {
+  id: string;
+  imgUrl: string;
+  word: string;
+  meaning: string;
+  language: string;
+  createdAt: number;
+};
 
-const LANGS = ['Hindi','Urdu','Marathi','Gujarati','Punjabi','Bengali','Tamil','Telugu','Malayalam','Kannada','Sindhi','Konkani','Odia','Sinhala','Nepali'];
+const LANGS = [
+  'Hindi', 'Urdu', 'Marathi', 'Gujarati', 'Punjabi', 'Bengali',
+  'Tamil', 'Telugu', 'Malayalam', 'Kannada', 'Sindhi', 'Konkani',
+  'Odia', 'Sinhala', 'Nepali'
+];
 
-export default function Page(){
-  const [img,setImg]=useState<string|null>(null);
-  const [word,setWord]=useState('');
-  const [meaning,setMeaning]=useState('');
-  const [language,setLanguage]=useState('Hindi');
-  const [entries,setEntries]=useState<Entry[]>([]);
-  const [submitting,setSubmitting]=useState(false);
-  const [error,setError]=useState<string|null>(null);
-  const [loading,setLoading]=useState(true);
+export default function Page() {
+  const [img, setImg] = useState<string | null>(null);
+  const [word, setWord] = useState('');
+  const [meaning, setMeaning] = useState('');
+  const [language, setLanguage] = useState(LANGS[0]);
+  const [entries, setEntries] = useState<Entry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  async function load(){
-    try{
-      const r=await fetch('/api/list',{cache:'no-store'});
-      const d=await r.json();
-      setEntries(d.entries||[]);
-    }finally{ setLoading(false); }
-  }
-  useEffect(()=>{ load(); },[]);
+  // Load existing entries from API (Blob-backed entries.json)
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch('/api/list', { cache: 'no-store' });
+        const data = await res.json();
+        setEntries(Array.isArray(data?.entries) ? data.entries : []);
+      } catch {
+        setEntries([]);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
 
-  async function handleSubmit(){
-    if(!img){ setError('Please draw your word first.'); return; }
-    if(!meaning.trim()){ setError('Please add a meaning.'); return; }
-    setError(null); setSubmitting(true);
-    try{
-      const res = await fetch('/api/submit',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ word, meaning, language, dataUrl: img }) });
-      const out = await res.json();
-      if(!res.ok) throw new Error(out.error||'Failed to save');
-      setWord(''); setMeaning(''); setLanguage('Hindi'); setImg(null);
-      await load();
-    }catch(e:any){ setError(e.message||'Error'); }finally{ setSubmitting(false); }
-  }
+  const handleSubmit = async () => {
+    setError(null);
 
-  async function share(entry: Entry){
-    const { blob, fileName } = await makeShareImage({ doodleUrl: entry.imgUrl, language: entry.language, meaning: entry.meaning, word: entry.word });
-    if (navigator.share && navigator.canShare?.({ files: [new File([blob], fileName)] })) {
-      await navigator.share({ title: 'MY DOODLE DICTIONARY SUBMISSION', text: `${entry.word?entry.word+' — ':''}${entry.meaning} (${entry.language})`, files: [new File([blob], fileName, { type: 'image/png' })] });
-    } else {
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a'); a.href = url; a.download = fileName; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
-      alert('Saved image. You can share it from your gallery 📲');
+    if (!img) {
+      setError('Please draw a doodle first ✏️');
+      return;
     }
-  }
+    if (!meaning.trim()) {
+      setError('Please add a short meaning/description 💬');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const res = await fetch('/api/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          word: word.trim(),
+          meaning: meaning.trim(),
+          language,
+          dataUrl: img
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data?.error || 'Could not submit. Please try again.');
+      } else {
+        // Prepend the new entry
+        if (data?.entry) setEntries((prev) => [data.entry, ...prev].slice(0, 500));
+        // Reset inputs
+        setWord('');
+        setMeaning('');
+        setImg(null);
+      }
+    } catch (e: any) {
+      setError(e?.message || 'Network error. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const share = async (e: Entry) => {
+    try {
+      await navigator.clipboard.writeText(e.imgUrl);
+      alert('Image URL copied! You can share it anywhere.');
+    } catch {
+      window.open(e.imgUrl, '_blank');
+    }
+  };
 
   return (
     <div className="container">
+      {/* Top header */}
       <div className="header">
-  <div className="headings">
-    <h1 className="h1">THE DOODLE WALL</h1>
-    <div className="subh">(by The Desi Dictionary)</div>
-  </div>
-</div></div></div>
+        <div className="headings">
+          <h1 className="h1">THE DOODLE WALL</h1>
+          <div className="subh">(by The Desi Dictionary)</div>
+        </div>
+      </div>
 
-      <div className="intro"><p>✏️ Add a word you've learnt or love from your mother tongue — sweet, silly or desi!</p><p>💬 Every word teaches someone something new.</p><p>💛 One word from you, one word learned by someone else.</p><p>🚫 No galis & rude words allowed please!!</p></div>
+      {/* Intro (first line replaced; rest kept; removed “Aiyo! Arrey! Oye!”) */}
+      <div className="intro">
+        <p>✏️ Add a word you’ve learnt or love from your mother tongue — sweet, silly or desi!</p>
+        <p>💬 Every word teaches someone something new.</p>
+        <p>💛 One word from you, one word learned by someone else.</p>
+        <p>🚫 No galis & rude words allowed please!!</p>
+      </div>
 
-      <DrawingCanvas onExport={(d)=>setImg(d)} />
+      {/* Canvas */}
+      <DrawingCanvas onExport={(dataUrl: string) => setImg(dataUrl)} />
+      {img && (
+        <div style={{ textAlign: 'center', marginTop: 8 }}>
+          <small className="note">Preview captured. Fill in details and add to wall.</small>
+        </div>
+      )}
 
+      {/* Inputs */}
       <div className="inputRow">
-        <select className="select" value={language} onChange={(e)=>setLanguage(e.target.value)}>
-          {LANGS.map(l=> <option key={l} value={l}>{l}</option>)}
+        <select className="select" value={language} onChange={(e) => setLanguage(e.target.value)}>
+          {LANGS.map((l) => (
+            <option key={l} value={l}>{l}</option>
+          ))}
         </select>
-        <input className="input" value={word} onChange={e=>setWord(e.target.value)} placeholder="Word (optional)" />
-        <input className="input" value={meaning} onChange={e=>setMeaning(e.target.value)} placeholder="Meaning" />
-      </div>
-      {error && <p style={{color:'#b00020', textAlign:'center'}}>{error}</p>}
-      <div style={{textAlign:"center"}}>
-        <button className="addBtn" onClick={handleSubmit} disabled={submitting}>{submitting?'ADDING…':'💛 ADD TO WALL'}</button>
-        <div className="note" style={{marginTop:6}}>Every word teaches someone something new.</div>
+        <input
+          className="input"
+          value={word}
+          onChange={(e) => setWord(e.target.value)}
+          placeholder="Word (optional)"
+          maxLength={50}
+        />
+        <input
+          className="input"
+          value={meaning}
+          onChange={(e) => setMeaning(e.target.value)}
+          placeholder="Meaning / what it means (required)"
+          maxLength={180}
+        />
       </div>
 
+      <div style={{ textAlign: 'center' }}>
+        <button className="addBtn" onClick={handleSubmit} disabled={submitting}>
+          {submitting ? 'ADDING…' : '💛 ADD TO WALL'}
+        </button>
+        {error && (
+          <div className="note" style={{ color: '#b00020', marginTop: 8 }}>
+            {error}
+          </div>
+        )}
+      </div>
+
+      {/* Divider + Gallery header */}
       <hr className="divider" />
-<h2 className="title" style={{textAlign:"center"}}>The Wall of Words</h2>
-<div className="stat" style={{textAlign:"center",fontSize:14,opacity:.8,marginTop:4}}>{entries.length} doodles and counting</div>
+      <h2 className="title" style={{ textAlign: 'center' }}>The Wall of Words</h2>
+      <div className="stat" style={{ textAlign: 'center', fontSize: 14, opacity: 0.8, marginTop: 4 }}>
+        {entries.length} doodles and counting
+      </div>
 
-      {loading ? <p className="note" style={{textAlign:"center"}}>Loading…</p> : (
-        <div className="grid">
-          {entries.map((e)=>(
-            <button key={e.id} className="card" onClick={()=>share(e)} title="Share my Doodle Dictionary submission" aria-label="Share my Doodle Dictionary submission" style={{textAlign:'left', padding:0, cursor:'pointer'}}>
+      {/* Grid */}
+      {loading ? (
+        <p className="note" style={{ textAlign: 'center', marginTop: 12 }}>Loading…</p>
+      ) : entries.length === 0 ? (
+        <p className="note" style={{ textAlign: 'center', marginTop: 12 }}>No doodles yet — be the first!</p>
+      ) : (
+        <div className="grid" style={{ marginTop: 12 }}>
+          {entries.map((e) => (
+            <button
+              key={e.id}
+              className="card"
+              onClick={() => share(e)}
+              title="Share my Doodle Dictionary submission"
+              aria-label="Share my Doodle Dictionary submission"
+              style={{ textAlign: 'left', padding: 0, cursor: 'pointer' }}
+            >
               <span className="cardTopCorner" aria-hidden />
               <span className="cardBottomCorner" aria-hidden />
               <div className="badge">{e.language}</div>
-              <img src={e.imgUrl} alt={e.word||'Doodle'} style={{width:'100%', display:'block', aspectRatio:'4 / 3', objectFit:'cover'}}/>
+              <img
+                src={e.imgUrl}
+                alt={e.word || 'Doodle'}
+                style={{ width: '100%', display: 'block', aspectRatio: '4 / 3', objectFit: 'cover' }}
+              />
               <div className="footerStrip">
-                {e.word && <div style={{fontWeight:800, marginBottom:2}}>{e.word}</div>}
-                <div style={{fontSize:14, lineHeight:1.35}}>{e.meaning}</div>
+                {e.word && <div style={{ fontWeight: 800, marginBottom: 2 }}>{e.word}</div>}
+                <div style={{ fontSize: 14, lineHeight: 1.35 }}>{e.meaning}</div>
               </div>
             </button>
           ))}
         </div>
       )}
-
     </div>
   );
 }
