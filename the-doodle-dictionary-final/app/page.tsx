@@ -1,7 +1,7 @@
 
 'use client';
 import { useEffect, useRef, useState } from 'react';
-import DrawingCanvas from './components/DrawingCanvas';
+import DrawingCanvas from "@/components/DrawingCanvas";
 import { makeShareImage } from '../lib/makeShareImage';
 
 type Entry = { id:string; imgUrl:string; word:string; meaning:string; language:string; createdAt:number };
